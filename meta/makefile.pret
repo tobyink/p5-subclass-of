@@ -3,6 +3,8 @@
 `Subclass-Of`
 	perl_version_from m`Subclass::Of`;
 	version_from      m`Subclass::Of`;
-	readme_from       m`Subclass::Of` ;
+	readme_from       m`Subclass::Of`;
+	requires          p`Module::Runtime`, p`List::MoreUtils`, p`Sub::Name`, p`namespace::clean`;
+	recommends        p`Moo 1.002000`;
 	.
 

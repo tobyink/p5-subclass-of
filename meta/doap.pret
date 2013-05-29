@@ -8,7 +8,7 @@
 	:homepage             <https://metacpan.org/release/Subclass-Of>;
 	:download-page        <https://metacpan.org/release/Subclass-Of>;
 	:bug-database         <http://rt.cpan.org/Dist/Display.html?Queue=Subclass-Of>;
-#	:repository           [ a :HgRepository; :browse <https://bitbucket.org/tobyink/p5-subclass-of> ];
+	:repository           [ a :GitRepository; :browse <https://github.com/tobyink/p5-subclass-of> ];
 	:created              2013-05-29;
 	:license              <http://dev.perl.org/licenses/>;
 	:maintainer           cpan:TOBYINK;
