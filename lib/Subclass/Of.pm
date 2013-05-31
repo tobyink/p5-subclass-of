@@ -1,5 +1,6 @@
 package Subclass::Of;
 
+use v5.008;
 use strict;
 use warnings;
 no strict qw(refs);
