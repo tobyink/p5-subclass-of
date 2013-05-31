@@ -316,7 +316,14 @@ Create a subclass, adding roles:
 Load a class, creating a subclass of it with additional roles (Moose, Mouse,
 Moo and Role::Tiny should all work) and/or additional methods.
 
+=head1 CAVEATS
 
+Certain class builders don't play nice with certain role builders.
+Moose classes should be able to consume a mixture of Moose and Moo roles.
+Moo classes should be able to consume a mixture of Moose, Moo, Mouse and Role::Tiny roles.
+Mouse classes should be able to consume Mouse roles.
+Any class should be able to consume Role::Tiny roles, provided you don't try to mix in other roles at the same time.
+(For example, a Mouse class can consume a Role::Tiny role, but it can't consume a Role::Tiny role and a Mouse role simultaneously.)
 
 =head1 BUGS
 
