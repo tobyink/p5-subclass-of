@@ -4,3 +4,14 @@
 	issued  2013-05-29;
 	label   "Developer preview".
 
+`Subclass-Of 0.000_02 cpan:TOBYINK`
+	issued  2013-05-31;
+	changeset [
+		item "Exportable 'subclass_of' function."^^Addition;
+		item "Public 'install' method."^^Addition;
+		item "Support subclassing of Mouse classes."^^Addition;
+		item "A shed-load of test cases."^^Packaging;
+		item "Much documentation."^^Documentation;
+		item "Lexically scope aliases."^^Change;
+	].
+
