@@ -47,7 +47,7 @@ sub import
 		my $subclass = $me->_build_subclass($base, \%opts);
 		my @aliases  = $opts{-as} ? @{$opts{-as}} : ($base =~ /(\w+)$/);
 		
-		my $constant = eval sprintf(q{sub(){%s}}, perlstring($subclass));
+		my $constant = eval sprintf(q/sub () { %s if $] }/, perlstring($subclass));
 		$i_made_this{refaddr($constant)} = $subclass;
 		
 		for my $a (@aliases)
