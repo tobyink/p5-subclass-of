@@ -49,11 +49,10 @@ sub install
 
 sub subclass_of
 {
-	my $me       = shift;
 	my $base     = shift or croak "Subclass::Of what?";
-	my %opts     = $me->_parse_opts(@_);
+	my %opts     = __PACKAGE__->_parse_opts(@_);
 	
-	return $me->_build_subclass($base, \%opts);
+	return __PACKAGE__->_build_subclass($base, \%opts);
 }
 
 sub _parse_opts
@@ -133,7 +132,14 @@ sub _build_subclass_moose
 	my $me = shift;
 	my ($parent, $child, $opts) = @_;
 	
-	"Moose::Meta::Class"->new($child, superclasses => [$parent]);
+#	"Moose::Meta::Class"->initialize($child, superclasses => [$parent]);
+
+	eval sprintf(q{
+		package %s;
+		use Moose;
+		extends %s;
+		use namespace::clean;
+	}, $child, perlstring($parent));	
 }
 
 sub _build_subclass_mouse
