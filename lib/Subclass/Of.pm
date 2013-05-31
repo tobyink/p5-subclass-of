@@ -103,13 +103,13 @@ sub _build_subclass
 		$opts->{-package} ||= [ sprintf('%s::__SUBCLASS__::%04d', $parent, ++$count{$parent}) ]
 	)->[0];
 	
-	my $oo = _detect_oo(use_package_optimistically($parent));
+	my $oo     = _detect_oo(use_package_optimistically($parent));	
+	my $method = $oo ? lc "_build_subclass_$oo" : "_build_subclass_raw";
 	
-	$me->_build_subclass_moose($parent, $child, $opts) if $oo eq "Moose";
-	$me->_build_subclass_mouse($parent, $child, $opts) if $oo eq "Moose";
-	$me->_build_subclass_moo($parent, $child, $opts)   if $oo eq "Moo";
-	$me->_build_subclass_raw($parent, $child, $opts)   if $oo eq "";
-	
+	$me->$method($parent, $child, $opts);
+	$me->_apply_methods($child, $opts);	
+	$me->_apply_roles($child, $opts);
+
 	return $child;
 }
 
@@ -118,20 +118,20 @@ sub _build_subclass_moose
 	my $me = shift;
 	my ($parent, $child, $opts) = @_;
 	
-	my $meta = "Moose::Meta::Class"->new(
-		$opts->{-package}[0],
-		superclasses => [$parent],
-		methods      => $me->_make_method_hash($child, $opts),
-	);
-	
-	$me->_apply_roles($meta->name, $opts);
-	
-	return $meta->name;
+	"Moose::Meta::Class"->new($child, superclasses => [$parent]);
 }
 
 sub _build_subclass_mouse
 {
-	croak "$_[0] is a Mouse class; not currently supported";
+	my $me = shift;
+	my ($parent, $child, $opts) = @_;
+	
+	eval sprintf(q{
+		package %s;
+		use Mouse;
+		extends %s;
+		use namespace::clean;
+	}, $child, perlstring($parent));	
 }
 
 sub _build_subclass_moo
@@ -145,12 +145,6 @@ sub _build_subclass_moo
 		extends %s;
 		use namespace::clean;
 	}, $child, perlstring($parent));
-	
-	my $methods = $me->_make_method_hash($child, $opts);
-	for my $name (sort keys %$methods)
-	{
-		*{"$child\::$name"} = $methods->{$name};
-	}
 }
 
 sub _build_subclass_raw
@@ -159,14 +153,18 @@ sub _build_subclass_raw
 	my ($parent, $child, $opts) = @_;
 	
 	@{"$child\::ISA"} = $parent;
+}
+
+sub _apply_methods
+{
+	my $me = shift;
+	my ($pkg, $opts) = @_;
 	
-	my $methods = $me->_make_method_hash($child, $opts);
+	my $methods = $me->_make_method_hash($pkg, $opts);
 	for my $name (sort keys %$methods)
 	{
-		*{"$child\::$name"} = $methods->{$name};
+		*{"$pkg\::$name"} = $methods->{$name};
 	}
-	
-	$me->_apply_roles($child, $opts);
 }
 
 sub _apply_roles
@@ -176,31 +174,41 @@ sub _apply_roles
 	my @roles = map use_package_optimistically($_), @{ $opts->{-with} || [] };
 	
 	return unless @roles;
+	
+	# All roles appear to be Role::Tiny; use Role::Tiny to
+	# handle composition.
+	# 
+	if (all { _detect_oo($_) eq "" } @roles)
+	{
+		require Role::Tiny;
+		return "Role::Tiny"->apply_roles_to_package($pkg, @roles);
+	}
+	
+	# Otherwise, role composition is determined by the OO framework
+	# of the base class.
+	# 
 	my $oo = _detect_oo($pkg);
 	
 	if ($oo eq "Moo")
 	{
 		return "Moo::Role"->apply_roles_to_package($pkg, @roles);
 	}
-	elsif ($oo eq "Moose")
+	
+	if ($oo eq "Moose")
 	{
 		return Moose::Util::apply_all_roles($pkg, @roles);
 	}
-	elsif ($oo eq "Mouse")
+	
+	if ($oo eq "Mouse")
 	{
 		return Mouse::Util::apply_all_roles($pkg, @roles);
 	}
 	
-	if (all { _detect_oo($_) eq "" } @roles)
-	{
-		require Role::Tiny;
-		"Role::Tiny"->apply_roles_to_package($pkg, @roles);
-	}
-	else
-	{
-		require Moo::Role;
-		"Moo::Role"->apply_roles_to_package($pkg, @roles);
-	}
+	# If all else fails, try using Moo because it understands quite
+	# a lot about Moose and Mouse.
+	# 
+	require Moo::Role;
+	"Moo::Role"->apply_roles_to_package($pkg, @roles);
 }
 
 sub _make_method_hash
