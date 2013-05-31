@@ -82,35 +82,50 @@ sub _parse_opts
 	return %opts;
 }
 
-sub _detect_oo
 {
-	my $package = $_[0];
-	return "" unless $package->can("meta");
-	return "Moo"   if ref($package->meta) eq "Moo::HandleMoose::FakeMetaClass";
-	return "Mouse" if $package->meta->isa("Mouse::Meta::Module");
-	return "Moose" if $package->meta->isa("Moose::Meta::Class");
-	return "Moose" if $package->meta->isa("Moose::Meta::Role");
-	return "";
+	my %_detect_oo; # memoize
+	sub _detect_oo
+	{
+		my $pkg = $_[0];
+		
+		return $_detect_oo{$pkg} if exists $_detect_oo{$pkg};
+		
+		# Use metaclass to determine the OO framework in use.
+		# 
+		return $_detect_oo{$pkg} = ""
+			unless $pkg->can("meta");
+		return $_detect_oo{$pkg} = "Moo"
+			if ref($pkg->meta) eq "Moo::HandleMoose::FakeMetaClass";
+		return $_detect_oo{$pkg} = "Mouse"
+			if $pkg->meta->isa("Mouse::Meta::Module");
+		return $_detect_oo{$pkg} = "Moose"
+			if $pkg->meta->isa("Moose::Meta::Class");
+		return $_detect_oo{$pkg} = "Moose"
+			if $pkg->meta->isa("Moose::Meta::Role");
+		return $_detect_oo{$pkg} = "";
+	}
 }
 
-my %count;
-sub _build_subclass
 {
-	my $me = shift;
-	my ($parent, $opts) = @_;
-	
-	my $child = (
-		$opts->{-package} ||= [ sprintf('%s::__SUBCLASS__::%04d', $parent, ++$count{$parent}) ]
-	)->[0];
-	
-	my $oo     = _detect_oo(use_package_optimistically($parent));	
-	my $method = $oo ? lc "_build_subclass_$oo" : "_build_subclass_raw";
-	
-	$me->$method($parent, $child, $opts);
-	$me->_apply_methods($child, $opts);	
-	$me->_apply_roles($child, $opts);
+	my %count;
+	sub _build_subclass
+	{
+		my $me = shift;
+		my ($parent, $opts) = @_;
+		
+		my $child = (
+			$opts->{-package} ||= [ sprintf('%s::__SUBCLASS__::%04d', $parent, ++$count{$parent}) ]
+		)->[0];
+		
+		my $oo     = _detect_oo(use_package_optimistically($parent));	
+		my $method = $oo ? lc "_build_subclass_$oo" : "_build_subclass_raw";
+		
+		$me->$method($parent, $child, $opts);
+		$me->_apply_methods($child, $opts);	
+		$me->_apply_roles($child, $opts);
 
-	return $child;
+		return $child;
+	}
 }
 
 sub _build_subclass_moose
