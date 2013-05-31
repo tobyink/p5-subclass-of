@@ -15,3 +15,9 @@
 		item "Lexically scope aliases."^^Change;
 	].
 
+`Subclass-Of 0.000_03 cpan:TOBYINK`
+	issued  2013-05-31;
+	changeset [
+		item "Mandatory 'redefine' warnings for constant subs in Perl prior to 5.16 caused test failures; stop allowing Perl to inline our 'constants', therefore avoid these warnings."^^Bugfix;
+	].
+
