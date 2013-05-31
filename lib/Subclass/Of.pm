@@ -11,9 +11,10 @@ BEGIN {
 }
 
 use B qw(perlstring);
-use Carp qw(croak);
+use Carp qw(carp croak);
 use Module::Runtime qw(use_package_optimistically);
 use List::MoreUtils qw(all);
+use Scalar::Util qw(refaddr);
 use Sub::Name qw(subname);
 use namespace::clean;
 
@@ -33,18 +34,36 @@ sub import
 	goto \&Exporter::TypeTiny::import;
 }
 
-sub install
 {
-	my $me       = shift;
-	my $base     = shift or croak "Subclass::Of what?";
-	my %opts     = $me->_parse_opts(@_);
-	
-	my $caller   = $opts{-into}[0];
-	my $subclass = $me->_build_subclass($base, \%opts);
-	my @aliases  = $opts{-as} ? @{$opts{-as}} : ($base =~ /(\w+)$/);
-	
-	*{"$caller\::$_"} = eval sprintf(q{sub(){%s}}, perlstring($subclass)) for @aliases;
-	"namespace::clean"->import(-cleanee => $caller, @aliases);
+	my %i_made_this;
+	sub install
+	{
+		my $me       = shift;
+		my $base     = shift or croak "Subclass::Of what?";
+		my %opts     = $me->_parse_opts(@_);
+		
+		my $caller   = $opts{-into}[0];
+		my $subclass = $me->_build_subclass($base, \%opts);
+		my @aliases  = $opts{-as} ? @{$opts{-as}} : ($base =~ /(\w+)$/);
+		
+		my $constant = eval sprintf(q{sub(){%s}}, perlstring($subclass));
+		$i_made_this{refaddr($constant)} = $subclass;
+		
+		for my $a (@aliases)
+		{
+			if (exists &{"$caller\::$a"})
+			{
+				my $old = $i_made_this{refaddr(\&{"$caller\::$a"})};
+				carp(
+					$old
+						? "Subclass::Of is overwriting alias '$a'; was '$old'; now '$subclass'"
+						: "Subclass::Of is overwriting function '$a'",
+				);
+			}
+			*{"$caller\::$a"} = $constant;
+		}
+		"namespace::clean"->import(-cleanee => $caller, @aliases);
+	}
 }
 
 sub subclass_of
@@ -75,7 +94,7 @@ sub _parse_opts
 			next;
 		}
 		
-		push @{$opts{$key}}, ref eq q(ARRAY) ? @$_ : $_;
+		push @{$opts{$key}||=[]}, ref eq q(ARRAY) ? @$_ : $_;
 	}
 	
 	return %opts;
@@ -116,7 +135,7 @@ sub _parse_opts
 			$opts->{-package} ||= [ sprintf('%s::__SUBCLASS__::%04d', $parent, ++$count{$parent}) ]
 		)->[0];
 		
-		my $oo     = _detect_oo(use_package_optimistically($parent));	
+		my $oo     = _detect_oo(use_package_optimistically($parent));
 		my $method = $oo ? lc "_build_subclass_$oo" : "_build_subclass_raw";
 		
 		$me->$method($parent, $child, $opts);
@@ -133,7 +152,7 @@ sub _build_subclass_moose
 	my ($parent, $child, $opts) = @_;
 	
 #	"Moose::Meta::Class"->initialize($child, superclasses => [$parent]);
-
+	
 	eval sprintf(q{
 		package %s;
 		use Moose;
@@ -304,17 +323,132 @@ Create a subclass overriding a method:
 	
 	my $ua = ImpatientUA->new;
 
-Create a subclass, adding roles:
+Create a subclass at runtime, adding roles:
 
-	use Subclass::Of "Some::Class",
-		-with => [qw/ My::Role Your::Role Another::Role /];
+	use Subclass::Of;
 	
-	my $thing = Class->new;
+	my $subclass = subclass_of(
+		"My::Class",
+		-with => [qw/ My::Role Your::Role His::Role Her::Role /],
+	);
+	
+	my $object = $subclass->new;
 
 =head1 DESCRIPTION
 
 Load a class, creating a subclass of it with additional roles (Moose, Mouse,
-Moo and Role::Tiny should all work) and/or additional methods.
+Moo and Role::Tiny should all work) and/or additional methods, and providing
+a L<lexically-scoped|Sub::Exporter::Lexical> L<alias|aliased> for the
+subclass.
+
+=head2 Compile-Time Usage
+
+To create a subclass at compile-time, use the following syntax:
+
+	use SubClass::Of $base_class, %options;
+
+The following options are supported:
+
+=over
+
+=item C<< -methods >>
+
+An arrayref of C<< name => coderef >> pairs of methods that you wish to add
+to your subclass.
+
+As you might expect, you can override methods defined in the base class.
+However, because of the way C<< $self->SUPER::method() >> is resolved by
+Perl, it will not work. Instead a C<< ::SUPER() >> function is provided.
+If called with no arguments, then it automatically calls the superclass
+method with the same arguments that the subclass was called with; if called
+with arguments, then the superclass method gets those arguments exactly.
+(If calling it with arguments, remember to include the invocant!)
+
+=item C<< -with >>
+
+The package names of one or more roles (Moose::Role, Role::Tiny, etc) you
+wish to apply to your subclass.
+
+=item C<< -package >>
+
+The package name for the subclass. Usually you can ignore this; Subclass::Of
+will think one up of its own.
+
+=item C<< -as >>
+
+Subclass::Of will export a lexically scoped alias for the package name. By
+lexically scoped I mean:
+
+	{
+		use Subclass::Of "LWP::UserAgent", -as => "MyUA";
+		# "MyUA" is available here ...
+	}
+	# ... but not here
+
+By "alias", I mean a constant that returns the subclass' package name as
+a string. (See L<aliased>.)
+
+The C<< -as >> option allows you to name this alias. You may request multiple
+aliases using an arrayref of strings.
+
+If you don't provide a C<< -as >> option, the last component of the parent
+class name (e.g. C<< UserAgent >> for subclasses of L<LWP::UserAgent>)
+will be used. If you don't want an alias, try C<< -as => [] >>.
+
+=back
+
+=head2 Run-Time Usage
+
+To create a subclass at compile-time, use the following syntax:
+
+	use Subclass::Of;
+	
+	my $subclass = subclass_of($base_class, %options);
+
+Note that the C<subclass_of> function is only exported if
+C<< use Subclass::Of >> is called with no import list.
+
+The options supported are the same as with compile-time usage, except
+C<< -as >> is ignored.
+
+=begin trustme
+
+=item subclass_of
+
+=end trustme
+
+=head2 Wrapping Subclass::Of
+
+If you need to provide a wrapper for Subclass::Of, and thus install scoped
+aliases into other packages, use the C<< install >> method:
+
+	require Subclass::Of;
+	Subclass::Of->install($base, -into => $target, %options);
+
+=begin trustme
+
+=item install
+
+=end trustme
+
+=head1 DIAGNOSTICS
+
+=over
+
+=item I<< Subclass::Of is overwriting function ... >>
+
+An alias is overwriting an existing sub.
+
+Try setting C<< -as >> to avoid this.
+
+=item I<< Subclass::Of is overwriting alias ... >>
+
+An alias is overwriting an existing sub.
+
+Try setting C<< -as >> to avoid this, or use Subclass::Of in a smaller
+lexical scope.
+
+=back
 
 =head1 CAVEATS
 
