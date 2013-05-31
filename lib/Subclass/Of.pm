@@ -451,6 +451,9 @@ lexical scope.
 
 =back
 
+There is no supported method to switch these warnings off. You should
+fix the problems they're telling you about.
+
 =head1 CAVEATS
 
 Certain class builders don't play nice with certain role builders.
