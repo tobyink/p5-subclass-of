@@ -18,25 +18,52 @@ use Sub::Name qw(subname);
 use namespace::clean;
 
 our ($SUPER_PKG, $SUPER_SUB, $SUPER_ARG);
+our @EXPORT = qw(subclass_of);
 
 my $_v;
 sub import
 {
-	my $caller   = caller;
+	my $me = shift;
+	
+	return $me->install(@_, -into => scalar caller) if @_;
+	
+	require Exporter::TypeTiny;
+	our @ISA = "Exporter::TypeTiny";
+	@_ = $me;
+	goto \&Exporter::TypeTiny::import;
+}
+
+sub install
+{
 	my $me       = shift;
-	my $base     = shift or return;
-	my ($opts)   = +{ $me->_parse_opts(@_) };
+	my $base     = shift or croak "Subclass::Of what?";
+	my %opts     = $me->_parse_opts(@_);
 	
-	my $subclass = $me->_build_subclass($base, $opts);
-	my ($as)     = ($base =~ /(\w+)$/);
+	my $caller   = $opts{-into}[0];
+	my $subclass = $me->_build_subclass($base, \%opts);
+	my @aliases  = $opts{-as} ? @{$opts{-as}} : ($base =~ /(\w+)$/);
 	
-	*{"$caller\::$_"} = eval sprintf(q{sub(){%s}}, perlstring($subclass))
-		for ($opts->{-as} ? @{$opts->{-as}} : $as);
+	*{"$caller\::$_"} = eval sprintf(q{sub(){%s}}, perlstring($subclass)) for @aliases;
+	"namespace::clean"->import(-cleanee => $caller, @aliases);
+}
+
+sub subclass_of
+{
+	my $me       = shift;
+	my $base     = shift or croak "Subclass::Of what?";
+	my %opts     = $me->_parse_opts(@_);
+	
+	return $me->_build_subclass($base, \%opts);
 }
 
 sub _parse_opts
 {
 	shift;
+	
+	if (@_==1 and ref($_[0]) eq q(HASH))
+	{
+		return %{$_[0]};
+	}
 	
 	my %opts;
 	my $key = undef;
