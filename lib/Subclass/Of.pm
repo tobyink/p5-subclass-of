@@ -140,7 +140,7 @@ sub _parse_opts
 		my $method = $oo ? lc "_build_subclass_$oo" : "_build_subclass_raw";
 		
 		$me->$method($parent, $child, $opts);
-		$me->_apply_methods($child, $opts);	
+		$me->_apply_methods($child, $opts);
 		$me->_apply_roles($child, $opts);
 
 		return $child;
@@ -159,7 +159,7 @@ sub _build_subclass_moose
 		use Moose;
 		extends %s;
 		use namespace::clean;
-	}, $child, perlstring($parent));	
+	}, $child, perlstring($parent));
 }
 
 sub _build_subclass_mouse
@@ -172,7 +172,7 @@ sub _build_subclass_mouse
 		use Mouse;
 		extends %s;
 		use namespace::clean;
-	}, $child, perlstring($parent));	
+	}, $child, perlstring($parent));
 }
 
 sub _build_subclass_moo
@@ -302,6 +302,8 @@ __END__
 =pod
 
 =encoding utf-8
+
+=for stopwords invocant
 
 =head1 NAME
 
