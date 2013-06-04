@@ -316,29 +316,29 @@ Subclass::Of - import a magic subclass
 
 Create a subclass overriding a method:
 
-	use Subclass::Of "LWP::UserAgent",
-		-as      => "ImpatientUA",
-		-methods => [
-			sub new {
-				my $self = ::SUPER();
-				$self->timeout(15);
-				$self->max_redirect(3);
-				return $self;
-			}
-		];
-	
-	my $ua = ImpatientUA->new;
+   use Subclass::Of "LWP::UserAgent",
+      -as      => "ImpatientUA",
+      -methods => [
+         sub new {
+            my $self = ::SUPER();
+            $self->timeout(15);
+            $self->max_redirect(3);
+            return $self;
+         }
+      ];
+   
+   my $ua = ImpatientUA->new;
 
 Create a subclass at runtime, adding roles:
 
-	use Subclass::Of;
-	
-	my $subclass = subclass_of(
-		"My::Class",
-		-with => [qw/ My::Role Your::Role His::Role Her::Role /],
-	);
-	
-	my $object = $subclass->new;
+   use Subclass::Of;
+   
+   my $subclass = subclass_of(
+      "My::Class",
+      -with => [qw/ My::Role Your::Role His::Role Her::Role /],
+   );
+   
+   my $object = $subclass->new;
 
 =head1 DESCRIPTION
 
@@ -351,7 +351,7 @@ subclass.
 
 To create a subclass at compile-time, use the following syntax:
 
-	use SubClass::Of $base_class, %options;
+   use SubClass::Of $base_class, %options;
 
 The following options are supported:
 
@@ -385,11 +385,11 @@ will think one up of its own.
 Subclass::Of will export a lexically scoped alias for the package name. By
 lexically scoped I mean:
 
-	{
-		use Subclass::Of "LWP::UserAgent", -as => "MyUA";
-		# "MyUA" is available here ...
-	}
-	# ... but not here
+   {
+      use Subclass::Of "LWP::UserAgent", -as => "MyUA";
+      # "MyUA" is available here ...
+   }
+   # ... but not here
 
 By "alias", I mean a constant that returns the subclass' package name as
 a string. (See L<aliased>.)
@@ -407,9 +407,9 @@ will be used. If you don't want an alias, try C<< -as => [] >>.
 
 To create a subclass at compile-time, use the following syntax:
 
-	use Subclass::Of;
-	
-	my $subclass = subclass_of($base_class, %options);
+   use Subclass::Of;
+   
+   my $subclass = subclass_of($base_class, %options);
 
 Note that the C<subclass_of> function is only exported if
 C<< use Subclass::Of >> is called with no import list.
@@ -428,8 +428,8 @@ C<< -as >> is ignored.
 If you need to provide a wrapper for Subclass::Of, and thus install scoped
 aliases into other packages, use the C<< install >> method:
 
-	require Subclass::Of;
-	Subclass::Of->install($base, -into => $target, %options);
+   require Subclass::Of;
+   Subclass::Of->install($base, -into => $target, %options);
 
 =begin trustme
 
