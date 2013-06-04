@@ -483,6 +483,8 @@ L<http://rt.cpan.org/Dist/Display.html?Queue=Subclass-Of>.
 
 =head1 SEE ALSO
 
+L<base>, L<parent>, L<aliased>, L<as>, L<use>, L<Package::Butcher>.
+
 =head1 AUTHOR
 
 Toby Inkster E<lt>tobyink@cpan.orgE<gt>.
