@@ -31,6 +31,8 @@ use warnings;
 use Test::More;
 use Test::Requires { "Role::Tiny" => "1.002000" };
 
+use Module::Runtime qw(module_notional_filename);
+
 {
 	use Subclass::Of "Local::Perl::Class",
 		-with     => ["Local::RoleTiny::Role"],
@@ -48,6 +50,8 @@ use Test::Requires { "Role::Tiny" => "1.002000" };
 	is($object->foo, 'FOO', q[$object->foo]);
 	is($object->bar, 'BAR', q[$object->bar]);
 	is($object->baz, 'BAZ', q[$object->baz]);
+	
+	is($INC{module_notional_filename(Class)}, __FILE__, '%INC ok');
 }
 
 ok(!eval "Class; 1", 'namespace::clean worked');

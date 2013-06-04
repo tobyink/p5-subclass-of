@@ -31,6 +31,8 @@ use warnings;
 use Test::More;
 use Test::Requires { "Mouse" => "1.00" };
 
+use Module::Runtime qw(module_notional_filename);
+
 {
 	use Subclass::Of "Local::Mouse::Class",
 		-with     => ["Local::Mouse::Role"],
@@ -49,6 +51,8 @@ use Test::Requires { "Mouse" => "1.00" };
 	is($object->foo, 'FOO', q[$object->foo]);
 	is($object->bar, 'BAR', q[$object->bar]);
 	is($object->baz, 'BAZ', q[$object->baz]);
+	
+	is($INC{module_notional_filename(Class)}, __FILE__, '%INC ok');
 }
 
 ok(!eval "Class; 1", 'namespace::clean worked');

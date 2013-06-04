@@ -13,7 +13,7 @@ BEGIN {
 
 use B qw(perlstring);
 use Carp qw(carp croak);
-use Module::Runtime qw(use_package_optimistically);
+use Module::Runtime qw(use_package_optimistically module_notional_filename);
 use List::MoreUtils qw(all);
 use Scalar::Util qw(refaddr);
 use Sub::Name qw(subname);
@@ -142,7 +142,10 @@ sub _parse_opts
 		$me->$method($parent, $child, $opts);
 		$me->_apply_methods($child, $opts);
 		$me->_apply_roles($child, $opts);
-
+		
+		my $i; $i++ while caller($i) eq __PACKAGE__;
+		$INC{module_notional_filename($child)} = (caller($i))[1];
+		
 		return $child;
 	}
 }

@@ -52,5 +52,9 @@ can_ok($object, qw(foo xyz));
 is($object->foo, "foo");
 is($object->xyz, 42);
 
+use Module::Runtime qw(module_notional_filename);
+
+is($INC{module_notional_filename($class)}, __FILE__, '%INC ok');
+
 done_testing;
 

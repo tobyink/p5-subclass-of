@@ -32,6 +32,8 @@ use Test::More;
 use Test::Requires { "Moose" => "2.0000" };
 use Test::Requires { "Moo"   => "1.002000" };
 
+use Module::Runtime qw(module_notional_filename);
+
 {
 	use Subclass::Of "Local::Moose::Class",
 		-as       => "Class1",
@@ -59,7 +61,7 @@ use Test::Requires { "Moo"   => "1.002000" };
 	is($object1->foo, 'FOO', q[$object1->foo]);
 	is($object1->bar, 'BAR', q[$object1->bar]);
 	is($object1->baz, 'BAZ', q[$object1->baz]);
-
+	
 	my $object2 = Class2->new;
 	
 	isa_ok($object2, 'Local::Moo::Class');
@@ -69,6 +71,9 @@ use Test::Requires { "Moo"   => "1.002000" };
 	is($object2->foo, 'FOO', q[$object2->foo]);
 	is($object2->bar, 'BAR', q[$object2->bar]);
 	is($object2->baz, 'BAZ', q[$object2->baz]);
+	
+	is($INC{module_notional_filename(Class1)}, __FILE__, '%INC ok');
+	is($INC{module_notional_filename(Class2)}, __FILE__, '%INC ok');
 }
 
 ok(!eval "Class1; 1", 'namespace::clean worked');
