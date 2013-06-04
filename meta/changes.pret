@@ -21,3 +21,11 @@
 		item "Mandatory 'redefine' warnings for constant subs in Perl prior to 5.16 caused test failures; stop allowing Perl to inline our 'constants', therefore avoid these warnings."^^Bugfix;
 	].
 
+`Subclass-Of 0.000_04 cpan:TOBYINK`
+	issued  2013-06-04;
+	changeset [
+		item "vstring warning in Perl 5.10.0 caused test failures."^^Bugfix;
+		item "Set %INC for generated classes."^^Change;
+		item "Added example script."^^Addition;
+	].
+
