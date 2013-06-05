@@ -8,7 +8,7 @@ no warnings qw(redefine prototype);
 
 BEGIN {
 	$Subclass::Of::AUTHORITY = 'cpan:TOBYINK';
-	$Subclass::Of::VERSION   = '0.000_04';
+	$Subclass::Of::VERSION   = '0.001';
 }
 
 use B qw(perlstring);
@@ -143,7 +143,7 @@ sub _parse_opts
 		$me->_apply_methods($child, $opts);
 		$me->_apply_roles($child, $opts);
 		
-		my $i; $i++ while caller($i) eq __PACKAGE__;
+		my $i = 0; $i++ while caller($i) eq __PACKAGE__;
 		$INC{module_notional_filename($child)} = (caller($i))[1];
 		
 		return $child;

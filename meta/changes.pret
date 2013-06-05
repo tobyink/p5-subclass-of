@@ -29,3 +29,10 @@
 		item "Added example script."^^Addition;
 	].
 
+`Subclass-Of 0.001 cpan:TOBYINK`
+	issued  2013-06-05;
+	changeset [
+		item "Minor clarifications."^^Documentation;
+		item "Added SEE ALSO section."^^Documentation;
+	].
+
