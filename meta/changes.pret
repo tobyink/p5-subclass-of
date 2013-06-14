@@ -36,3 +36,9 @@
 		item "Added SEE ALSO section."^^Documentation;
 	].
 
+`Subclass-Of 0.002 cpan:TOBYINK`
+	issued  2013-06-14;
+	changeset [
+		item "Support '-has' option to add attributes to a child class."^^Addition;
+	].
+

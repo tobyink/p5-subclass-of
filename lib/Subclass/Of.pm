@@ -8,7 +8,7 @@ no warnings qw(redefine prototype);
 
 BEGIN {
 	$Subclass::Of::AUTHORITY = 'cpan:TOBYINK';
-	$Subclass::Of::VERSION   = '0.001';
+	$Subclass::Of::VERSION   = '0.002';
 }
 
 use B qw(perlstring);
