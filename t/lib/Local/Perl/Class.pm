@@ -23,7 +23,7 @@ the same terms as the Perl 5 programming language system itself.
 
 package Local::Perl::Class;
 
-sub new { bless [], $_[0] };
+sub new { my $class = shift; bless {@_}, $class };
 sub foo { "foo" };
 
 1;

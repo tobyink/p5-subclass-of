@@ -136,10 +136,13 @@ sub _parse_opts
 			$opts->{-package} ||= [ sprintf('%s::__SUBCLASS__::%04d', $parent, ++$count{$parent}) ]
 		)->[0];
 		
-		my $oo     = _detect_oo(use_package_optimistically($parent));
-		my $method = $oo ? lc "_build_subclass_$oo" : "_build_subclass_raw";
+		my $oo = _detect_oo(use_package_optimistically($parent));
 		
-		$me->$method($parent, $child, $opts);
+		my $subclasser_method = $oo ? lc "_build_subclass_$oo"   : "_build_subclass_raw";
+		my $attributes_method = $oo ? lc "_apply_attributes_$oo" : "_apply_attributes_raw";
+		
+		$me->$subclasser_method($parent, $child, $opts);
+		$me->$attributes_method($child, $opts);
 		$me->_apply_methods($child, $opts);
 		$me->_apply_roles($child, $opts);
 		
@@ -197,6 +200,92 @@ sub _build_subclass_raw
 	my ($parent, $child, $opts) = @_;
 	
 	@{"$child\::ISA"} = $parent;
+}
+
+sub _apply_attributes_moose
+{
+	my $me = shift;
+	my ($child, $opts) = @_;
+	
+	return unless $opts->{-has};
+	
+	my $meta = $child->meta;
+	my $has  = sub { $meta->add_attribute(@_) };
+	
+	$me->_apply_attributes_generic($has, $opts);
+}
+
+*_apply_attributes_mouse = \&_apply_attributes_moose;
+
+sub _apply_attributes_moo
+{
+	my $me = shift;
+	my ($child, $opts) = @_;
+	
+	return unless $opts->{-has};
+	
+	my $raw = eval sprintf(q{
+		package %s;
+		use Moo;
+		my $sub = \&has;
+		use namespace::clean;
+		return $sub;
+	}, $child);
+	my $has = sub { $raw->($_[0], %{$_[1]}) };
+	
+	$me->_apply_attributes_generic($has, $opts);
+}
+
+sub _apply_attributes_raw
+{
+	my $me = shift;
+	my ($child, $opts) = @_;
+	
+	my $has = sub {
+		my ($name, $opts) = @_;
+		*{"$child\::$name"} = sub
+		{
+			my $self = shift;
+			if (@_)
+			{
+				croak "read-only accessor" unless $opts->{is} eq 'rw';
+				$opts->{isa}->($_[0]) if $opts->{isa};
+				$self->{$name} = $_[0];
+			}
+			if (exists $opts->{default} and not exists $self->{$name})
+			{
+				my $tmp = ref($opts->{default}) eq q(CODE)
+					? $opts->{default}->($self)
+					: $opts->{default};
+				$opts->{isa}->($tmp) if $opts->{isa};
+				$self->{$name} = $tmp;
+			}
+			return $self->{$name};
+		};
+	};
+	
+	$me->_apply_attributes_generic($has, $opts);	
+}
+
+sub _apply_attributes_generic
+{
+	my $me = shift;
+	my ($has, $opts) = @_;
+	
+	my @attrs = @{ $opts->{-has} || [] };
+	while (@attrs)
+	{
+		my $name = shift(@attrs);
+		$name =~ /^\w+/ or croak("Not a valid attribute name: $name");
+		
+		my $spec =
+			ref($attrs[0]) eq q(ARRAY) ? +{@{shift(@attrs)}} :
+			ref($attrs[0]) eq q(HASH)  ? shift(@attrs) :
+			ref($attrs[0]) eq q(CODE)  ? { is => "rw", default => shift(@attrs) } :
+			{ is => "rw" };
+		
+		$has->($name, $spec);
+	}
 }
 
 sub _apply_methods
@@ -374,6 +463,30 @@ with arguments, then the superclass method gets those arguments exactly.
 
 The package names of one or more roles (Moose::Role, Role::Tiny, etc) you
 wish to apply to your subclass.
+
+=item C<< -has >>
+
+Attributes to apply to the child class. You can provide Moose-style
+specifications for each attribute:
+
+   use Subclass::Of "MyClass",
+      -has => [
+         foo   => (),    # default spec
+         bar   => [...],
+         baz   => {...},
+         quux  => sub { "default" },
+      ];
+
+Note that the attribute specifications need to be supported by the OO
+framework of the parent class. Moose, Mouse and Moo all support fairly
+similar attribute specs, but they differ on some details. The C<is>,
+C<default> and C<required> options should be pretty safe bets; C<isa>
+will be fine if you're using L<Type::Tiny> type constraints.
+
+If the parent class is a plain old Perl class, then a small built-in
+attribute builder is used, which assumes that the object is a blessed
+hash. The builder supports C<is>, C<isa> and C<default>. It only builds
+accessors, I<not> a constructor!
 
 =item C<< -package >>
 

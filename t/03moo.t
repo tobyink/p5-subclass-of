@@ -57,4 +57,19 @@ use Module::Runtime qw(module_notional_filename);
 
 ok(!eval "Class; 1", 'namespace::clean worked');
 
+{
+	use Subclass::Of "Local::Moo::Class",
+		-as  => "MyClass",
+		-has => [
+			foo    => (),
+			bar    => [ is => "ro" ],
+			baz    => sub { "BAZ" },
+		];
+	
+	my $o = MyClass->new(foo => 42, bar => 666);
+	is($o->foo, 42, '$o->foo');
+	is($o->bar, 666, '$o->bar');
+	is($o->baz, "BAZ", '$o->baz');
+}
+
 done_testing;
