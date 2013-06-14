@@ -30,6 +30,7 @@ use strict;
 use warnings;
 use Test::More;
 use Test::Requires { "Role::Tiny" => "1.002000" };
+use Test::Fatal;
 
 use Module::Runtime qw(module_notional_filename);
 
@@ -70,5 +71,21 @@ ok(!eval "Class; 1", 'namespace::clean worked');
 	is($o->bar, 666, '$o->bar');
 	is($o->baz, "BAZ", '$o->baz');
 }
+
+like(
+	exception {
+		use Subclass::Of;
+		subclass_of("Local::Perl::Class", -has => [ foo => [required => 1] ]);
+	},
+	qr{^Option 'required' in attribute specification not supported},
+);
+
+like(
+	exception {
+		use Subclass::Of;
+		subclass_of("Local::Perl::Class", -has => [ foo => [isa => "Str"] ]);
+	},
+	qr{^Option 'isa' in attribute specification must be a blessed type constraint object},
+);
 
 done_testing;

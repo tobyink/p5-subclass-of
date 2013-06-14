@@ -15,7 +15,7 @@ use B qw(perlstring);
 use Carp qw(carp croak);
 use Module::Runtime qw(use_package_optimistically module_notional_filename);
 use List::MoreUtils qw(all);
-use Scalar::Util qw(refaddr);
+use Scalar::Util qw(refaddr blessed);
 use Sub::Name qw(subname);
 use namespace::clean;
 
@@ -243,13 +243,32 @@ sub _apply_attributes_raw
 	
 	my $has = sub {
 		my ($name, $opts) = @_;
+		for my $key (sort keys %$opts)
+		{
+			croak "Option '$key' in attribute specification not supported"
+				unless $key =~ /^(is|isa|default|lazy)$/;
+		}
+		if (exists $opts->{lazy} and not $opts->{lazy})
+		{
+			carp "Attribute '$name' will be lazy anyway.";
+		}
+		if (exists $opts->{is} and $opts->{is} !~ /^(ro|rw|lazy)$/)
+		{
+			croak "Option 'is' => '$opts->{is}' in attribute specification not supported"
+		}
+		if (exists $opts->{isa})
+		{
+			croak "Option 'isa' in attribute specification must be a blessed type constraint object with 'assert_valid' method"
+				unless blessed $opts->{isa} && $opts->{isa}->can('assert_valid');
+		}
+		
 		*{"$child\::$name"} = sub
 		{
 			my $self = shift;
 			if (@_)
 			{
 				croak "read-only accessor" unless $opts->{is} eq 'rw';
-				$opts->{isa}->($_[0]) if $opts->{isa};
+				$opts->{isa}->assert_valid($_[0]) if $opts->{isa};
 				$self->{$name} = $_[0];
 			}
 			if (exists $opts->{default} and not exists $self->{$name})
@@ -257,7 +276,7 @@ sub _apply_attributes_raw
 				my $tmp = ref($opts->{default}) eq q(CODE)
 					? $opts->{default}->($self)
 					: $opts->{default};
-				$opts->{isa}->($tmp) if $opts->{isa};
+				$opts->{isa}->assert_valid($tmp) if $opts->{isa};
 				$self->{$name} = $tmp;
 			}
 			return $self->{$name};
@@ -485,8 +504,8 @@ will be fine if you're using L<Type::Tiny> type constraints.
 
 If the parent class is a plain old Perl class, then a small built-in
 attribute builder is used, which assumes that the object is a blessed
-hash. The builder supports C<is>, C<isa> and C<default>. It only builds
-accessors, I<not> a constructor!
+hash. The builder supports C<is>, C<isa> and C<default> (which is always
+treated as lazy). It only builds accessors, I<not> a constructor!
 
 =item C<< -package >>
 
