@@ -283,7 +283,7 @@ sub _apply_attributes_raw
 		};
 	};
 	
-	$me->_apply_attributes_generic($has, $opts);	
+	$me->_apply_attributes_generic($has, $opts);
 }
 
 sub _apply_attributes_generic
