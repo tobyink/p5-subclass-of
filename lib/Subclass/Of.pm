@@ -8,7 +8,7 @@ package Subclass::Of;
 
 BEGIN {
 	$Subclass::Of::AUTHORITY = 'cpan:TOBYINK';
-	$Subclass::Of::VERSION   = '0.002';
+	$Subclass::Of::VERSION   = '0.003';
 }
 
 use B qw(perlstring);

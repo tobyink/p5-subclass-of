@@ -42,3 +42,10 @@
 		item "Support '-has' option to add attributes to a child class."^^Addition;
 	].
 
+`Subclass-Of 0.003 cpan:TOBYINK`
+	issued  2013-06-14;
+	changeset [
+		item "Use Exporter::Tiny instead of Exporter::TypeTiny."^^Update;
+		item "Use Dist::Inkt."^^Packaging;
+	].
+
