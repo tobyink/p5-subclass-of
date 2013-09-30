@@ -4,7 +4,7 @@
 	perl_version_from m`Subclass::Of`;
 	version_from      m`Subclass::Of`;
 	readme_from       m`Subclass::Of`;
-	requires          p`Module::Runtime`, p`List::MoreUtils`, p`Sub::Name`, p`namespace::clean`, p`Exporter::TypeTiny`;
+	requires          p`Module::Runtime`, p`List::MoreUtils`, p`Sub::Name`, p`namespace::clean`, p`Exporter::Tiny`;
 	test_requires     p`Test::Requires`, p`Test::Warn`, p`Test::More 0.96`, p`Test::Fatal`;
 	recommends        p`Moo 1.002000`;
 	.

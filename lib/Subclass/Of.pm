@@ -1,10 +1,10 @@
-package Subclass::Of;
-
 use 5.008;
 use strict;
 use warnings;
 no strict qw(refs);
 no warnings qw(redefine prototype);
+
+package Subclass::Of;
 
 BEGIN {
 	$Subclass::Of::AUTHORITY = 'cpan:TOBYINK';
@@ -29,10 +29,10 @@ sub import
 	
 	return $me->install(@_, -into => scalar caller) if @_;
 	
-	require Exporter::TypeTiny;
-	our @ISA = "Exporter::TypeTiny";
+	require Exporter::Tiny;
+	our @ISA = "Exporter::Tiny";
 	@_ = $me;
-	goto \&Exporter::TypeTiny::import;
+	goto \&Exporter::Tiny::import;
 }
 
 {
