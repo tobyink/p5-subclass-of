@@ -1,11 +1,21 @@
 # This file provides instructions for packaging.
 
 `Subclass-Of`
-	perl_version_from m`Subclass::Of`;
-	version_from      m`Subclass::Of`;
-	readme_from       m`Subclass::Of`;
-	requires          p`Module::Runtime`, p`List::MoreUtils`, p`Sub::Name`, p`namespace::clean`, p`Exporter::Tiny`;
-	test_requires     p`Test::Requires`, p`Test::Warn`, p`Test::More 0.96`, p`Test::Fatal`;
-	recommends        p`Moo 1.002000`;
+	deps:develop-recommendation [ deps:on "Dist::Inkt"^^deps:CpanId ];
+	deps:runtime-requirement    [ deps:on "Module::Runtime"^^deps:CpanId ];
+	deps:runtime-requirement    [ deps:on "List::MoreUtils"^^deps:CpanId ];
+	deps:runtime-requirement    [ deps:on "Sub::Name"^^deps:CpanId ];
+	deps:runtime-requirement    [ deps:on "namespace::clean"^^deps:CpanId ];
+	deps:runtime-requirement    [ deps:on "Exporter::Tiny"^^deps:CpanId ];
+	deps:runtime-suggestion     [ deps:on "Moo 1.002000"^^deps:CpanId ];
+	deps:runtime-suggestion     [ deps:on "Moose 2.0000"^^deps:CpanId ];
+	deps:runtime-suggestion     [ deps:on "Mouse 1.00"^^deps:CpanId ];
+	deps:test-requirement       [ deps:on "Test::Requires 0.06"^^deps:CpanId ];
+	deps:test-requirement       [ deps:on "Test::Warn"^^deps:CpanId ];
+	deps:test-requirement       [ deps:on "Test::More 0.96"^^deps:CpanId ];
+	deps:test-requirement       [ deps:on "Test::Fatal"^^deps:CpanId ];
+	deps:test-recommendation    [ deps:on "Moo 1.002000"^^deps:CpanId ];
+	deps:test-suggestion        [ deps:on "Moose 2.0000"^^deps:CpanId ];
+	deps:test-suggestion        [ deps:on "Mouse 1.00"^^deps:CpanId ];	
 	.
 
