@@ -14,7 +14,7 @@ BEGIN {
 use B qw(perlstring);
 use Carp qw(carp croak);
 use Module::Runtime qw(use_package_optimistically module_notional_filename);
-use List::MoreUtils qw(all);
+use List::Util 1.33 qw(all);
 use Scalar::Util qw(refaddr blessed);
 use Sub::Name qw(subname);
 use namespace::clean;
