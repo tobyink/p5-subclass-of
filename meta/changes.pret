@@ -57,3 +57,9 @@
 		item "Use List::Util (core module) instead of List::MoreUtils."^^Update;
 	].
 
+`Subclass-Of 0.005 cpan:TOBYINK`
+	issued  2017-06-13;
+	changeset [
+		item "Correct syntax of SYNOPSIS."^^Documentation;
+	].
+
