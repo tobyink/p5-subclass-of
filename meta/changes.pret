@@ -49,3 +49,10 @@
 		item "Use Dist::Inkt."^^Packaging;
 	].
 
+`Subclass-Of 0.004 cpan:TOBYINK`
+	issued  2017-06-13;
+	changeset [
+		item "Use Sub::Util (core module) instead of Sub::Name."^^Update;
+		item "Use List::Util (core module) instead of List::MoreUtils."^^Update;
+	].
+
