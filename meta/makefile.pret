@@ -3,8 +3,8 @@
 `Subclass-Of`
 	deps:develop-recommendation [ deps:on "Dist::Inkt"^^deps:CpanId ];
 	deps:runtime-requirement    [ deps:on "Module::Runtime"^^deps:CpanId ];
-	deps:runtime-requirement    [ deps:on "List::MoreUtils"^^deps:CpanId ];
-	deps:runtime-requirement    [ deps:on "Sub::Name"^^deps:CpanId ];
+	deps:runtime-requirement    [ deps:on "List::Util 1.33"^^deps:CpanId ];
+	deps:runtime-requirement    [ deps:on "Sub::Util"^^deps:CpanId ];
 	deps:runtime-requirement    [ deps:on "namespace::clean"^^deps:CpanId ];
 	deps:runtime-requirement    [ deps:on "Exporter::Tiny"^^deps:CpanId ];
 	deps:runtime-suggestion     [ deps:on "Moo 1.002000"^^deps:CpanId ];

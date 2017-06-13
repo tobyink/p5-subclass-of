@@ -14,9 +14,9 @@ BEGIN {
 use B qw(perlstring);
 use Carp qw(carp croak);
 use Module::Runtime qw(use_package_optimistically module_notional_filename);
-use List::MoreUtils qw(all);
+use List::Util 1.33 qw(all);
 use Scalar::Util qw(refaddr blessed);
-use Sub::Name qw(subname);
+use Sub::Util qw(set_subname);
 use namespace::clean;
 
 our ($SUPER_PKG, $SUPER_SUB, $SUPER_ARG);
@@ -378,7 +378,7 @@ sub _make_method_hash
 		$name =~ /^\w+/ or croak("Not a valid method name: $name");
 		ref($code) eq q(CODE) or croak("Not a code reference: $code");
 		
-		$r->{$name} = subname "$pkg\::$name", sub {
+		$r->{$name} = set_subname "$pkg\::$name", sub {
 			local $SUPER_PKG = $pkg;
 			local $SUPER_SUB = $name;
 			local $SUPER_ARG = \@_;
