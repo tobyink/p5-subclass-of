@@ -63,3 +63,10 @@
 		item "Correct syntax of SYNOPSIS."^^Documentation;
 	].
 
+`Subclass-Of 0.006 cpan:TOBYINK`
+	issued  2017-06-13;
+	changeset [
+		item "Support -lazy option to defer subclassing."^^Addition;
+		item "Remove superfluous usage of Data::Dumper from example."^^Documentation;
+	].
+
