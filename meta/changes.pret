@@ -50,6 +50,7 @@
 	].
 
 `Subclass-Of 0.004 cpan:TOBYINK`
+	label "Four years later. (29 Feb doesn't count.)"
 	issued  2017-06-13;
 	changeset [
 		item "Use Sub::Util (core module) instead of Sub::Name."^^Update;
