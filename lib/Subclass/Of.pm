@@ -74,7 +74,7 @@ sub import
 			$subclass = $me->_build_subclass($base, \%opts);
 			$constant = eval sprintf(q/sub () { %s if $] }/, perlstring($subclass));
 			$i_made_this{refaddr($constant)} = $subclass;
-		}		
+		}
 		
 		for my $a (@aliases)
 		{
