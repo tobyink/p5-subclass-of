@@ -427,12 +427,12 @@ Create a subclass overriding a method:
    use Subclass::Of "LWP::UserAgent",
       -as      => "ImpatientUA",
       -methods => [
-         sub new {
+         new => sub {
             my $self = ::SUPER();
             $self->timeout(15);
             $self->max_redirect(3);
             return $self;
-         }
+         },
       ];
    
    my $ua = ImpatientUA->new;
