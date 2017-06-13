@@ -22,6 +22,10 @@ use namespace::clean;
 our ($SUPER_PKG, $SUPER_SUB, $SUPER_ARG);
 our @EXPORT = qw(subclass_of);
 
+BEGIN {
+	*HAS_CURRENT_SUB = $] ge '5.016000' ? sub(){!!1} : sub(){!!0};
+};
+
 my $_v;
 sub import
 {
@@ -44,11 +48,33 @@ sub import
 		my %opts     = $me->_parse_opts(@_);
 		
 		my $caller   = $opts{-into}[0];
-		my $subclass = $me->_build_subclass($base, \%opts);
 		my @aliases  = $opts{-as} ? @{$opts{-as}} : ($base =~ /(\w+)$/);
 		
-		my $constant = eval sprintf(q/sub () { %s if $] }/, perlstring($subclass));
-		$i_made_this{refaddr($constant)} = $subclass;
+		my $constant;
+		my $subclass;
+		if ($opts{-lazy}) {
+			if (HAS_CURRENT_SUB) {
+				$constant = sub () {
+					$subclass ||= do {
+						my $built = $me->_build_subclass($base, \%opts);
+						my $current_sub = CORE::__SUB__();
+						$i_made_this{refaddr($current_sub)} = $built;
+						$built;
+					};
+				};
+			}
+			else {
+				$constant = sub () {
+					$subclass ||= $me->_build_subclass($base, \%opts);
+				};
+			}
+			$i_made_this{refaddr($constant)} = '(unknown package)';
+		}
+		else {
+			$subclass = $me->_build_subclass($base, \%opts);
+			$constant = eval sprintf(q/sub () { %s if $] }/, perlstring($subclass));
+			$i_made_this{refaddr($constant)} = $subclass;
+		}		
 		
 		for my $a (@aliases)
 		{
@@ -57,7 +83,9 @@ sub import
 				my $old = $i_made_this{refaddr(\&{"$caller\::$a"})};
 				carp(
 					$old
-						? "Subclass::Of is overwriting alias '$a'; was '$old'; now '$subclass'"
+						? "Subclass::Of is overwriting alias '$a'"
+							.($old eq '(unknown package)'?"":"; was '$old'")
+							.($subclass?"; now '$subclass'":"")
 						: "Subclass::Of is overwriting function '$a'",
 				);
 			}
@@ -92,10 +120,11 @@ sub _parse_opts
 		
 		if (defined and !ref and /^-/) {
 			$key = $_;
+			$opts{$key} ||= [];
 			next;
 		}
 		
-		push @{$opts{$key}||=[]}, ref eq q(ARRAY) ? @$_ : $_;
+		push @{$opts{$key}}, ref eq q(ARRAY) ? @$_ : $_;
 	}
 	
 	return %opts;
@@ -533,6 +562,22 @@ If you don't provide a C<< -as >> option, the last component of the parent
 class name (e.g. C<< UserAgent >> for subclasses of L<LWP::UserAgent>)
 will be used. If you don't want an alias, try C<< -as => [] >>.
 
+=item C<< -lazy >>
+
+Defers the generation of the subclass until the last possible moment. This
+might be useful in the case of:
+
+   use Subclass::Of "LWP::UserAgent", -lazy, -as => "MyUA";
+   
+   if (some_unlikely_condition()) {
+      MyUA->new->post( ... );
+   }
+   else {
+      # we don't need MyUA, so why bother generating the subclass.
+   }
+
+Even the parent class isn't loaded until necessary.
+
 =back
 
 =head2 Run-Time Usage
@@ -547,7 +592,7 @@ Note that the C<subclass_of> function is only exported if
 C<< use Subclass::Of >> is called with no import list.
 
 The options supported are the same as with compile-time usage, except
-C<< -as >> is ignored. (No alias is generated.)
+C<< -as >> and C<< -lazy >> are ignored. (No alias is generated.)
 
 The return value of C<subclass_of> is the name of the class as a string.
 
