@@ -15,16 +15,12 @@ use B qw(perlstring);
 use Carp qw(carp croak);
 use Module::Runtime qw(use_package_optimistically module_notional_filename);
 use List::Util 1.33 qw(all);
-use Scalar::Util qw(refaddr blessed);
+use Scalar::Util qw(refaddr blessed weaken);
 use Sub::Util qw(set_subname);
 use namespace::clean;
 
 our ($SUPER_PKG, $SUPER_SUB, $SUPER_ARG);
 our @EXPORT = qw(subclass_of);
-
-BEGIN {
-	*HAS_CURRENT_SUB = $] ge '5.016000' ? sub(){!!1} : sub(){!!0};
-};
 
 my $_v;
 sub import
@@ -53,21 +49,15 @@ sub import
 		my $constant;
 		my $subclass;
 		if ($opts{-lazy}) {
-			if (HAS_CURRENT_SUB) {
-				$constant = sub () {
-					$subclass ||= do {
-						my $built = $me->_build_subclass($base, \%opts);
-						my $current_sub = CORE::__SUB__();
-						$i_made_this{refaddr($current_sub)} = $built;
-						$built;
-					};
+			my $current_sub;
+			$constant = sub () {
+				$subclass ||= do {
+					my $built = $me->_build_subclass($base, \%opts);
+					$i_made_this{refaddr($current_sub)} = $built;
+					$built;
 				};
-			}
-			else {
-				$constant = sub () {
-					$subclass ||= $me->_build_subclass($base, \%opts);
-				};
-			}
+			};
+			weaken( $current_sub = $constant );
 			$i_made_this{refaddr($constant)} = '(unknown package)';
 		}
 		else {
@@ -92,6 +82,14 @@ sub import
 			*{"$caller\::$a"} = $constant;
 		}
 		"namespace::clean"->import(-cleanee => $caller, @aliases);
+	}
+	
+	sub _alias_to_package_name {
+		shift unless ref $_[0]; # allow call as class method
+		my @r = map $i_made_this{refaddr($_)}, @_;
+		croak('_alias_to_package_name(LIST) returns a list')
+			if @r != 1 and defined(wantarray) and !wantarray;
+		wantarray ? @r : $r[0];
 	}
 }
 

@@ -28,23 +28,26 @@ use Test::More;
 
 use Subclass::Of "Local::Perl::Class" => (
 	-lazy,
-	-package => 'Example::Subclass::Blah',
 	-methods => [
 		xyz => sub { 42 },
 	],
 );
 
-ok not 'Example::Subclass::Blah'->can('foo');
-ok not 'Example::Subclass::Blah'->can('xyz');
+ok not 'Local::Perl::Class::__SUBCLASS__::0001'->can('foo');
+ok not 'Local::Perl::Class::__SUBCLASS__::0001'->can('xyz');
+
+is(Subclass::Of::_alias_to_package_name(\&Class), '(unknown package)');
 
 # generates the class
-is(Class, 'Example::Subclass::Blah');
+is(Class, 'Local::Perl::Class::__SUBCLASS__::0001');
 
-ok 'Example::Subclass::Blah'->can('foo');
-ok 'Example::Subclass::Blah'->can('xyz');
+ok 'Local::Perl::Class::__SUBCLASS__::0001'->can('foo');
+ok 'Local::Perl::Class::__SUBCLASS__::0001'->can('xyz');
+
+is(Subclass::Of::_alias_to_package_name(\&Class), 'Local::Perl::Class::__SUBCLASS__::0001');
 
 # memoized
-is(Class, 'Example::Subclass::Blah');
+is(Class, 'Local::Perl::Class::__SUBCLASS__::0001');
 
 done_testing;
 
