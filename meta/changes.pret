@@ -70,3 +70,10 @@
 		item "Remove superfluous usage of Data::Dumper from example."^^Documentation;
 	].
 
+`Subclass-Of 0.007 cpan:TOBYINK`
+	issued  2017-06-16;
+	changeset [
+		item "Don't use __SUB__ because it breaks older Perl, even if hidden behind a conditional. Just use a plain old weakened reference."^^Bugfix;
+		item "Undocumented/unsupported _alias_to_package_name function."^^Addition;
+	].
+
