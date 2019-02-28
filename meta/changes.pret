@@ -77,3 +77,8 @@
 		item "Undocumented/unsupported _alias_to_package_name function."^^Addition;
 	].
 
+`Subclass-Of 0.008 cpan:TOBYINK`
+	issued  2019-02-28;
+	changeset [
+		item "Support fieldhash=>1 to allow attributes to be stored inside-out when subclassing non-Moose/Mouse/Moo classes."^^Addition;
+	].
