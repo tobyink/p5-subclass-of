@@ -19,13 +19,6 @@ use Scalar::Util qw(refaddr blessed weaken);
 use Sub::Util qw(set_subname);
 use namespace::clean;
 
-BEGIN {
-	my $impl;
-	$impl ||= eval { require Hash::FieldHash;       'Hash::FieldHash' };
-	$impl ||= do   { require Hash::Util::FieldHash; 'Hash::Util::FieldHash' };
-	$impl->import('fieldhash');
-};
-
 our ($SUPER_PKG, $SUPER_SUB, $SUPER_ARG);
 our @EXPORT = qw(subclass_of);
 
@@ -270,6 +263,7 @@ sub _apply_attributes_moo
 	$me->_apply_attributes_generic($has, $opts);
 }
 
+my $fieldhash;
 sub _apply_attributes_raw
 {
 	my $me = shift;
@@ -299,7 +293,15 @@ sub _apply_attributes_raw
 		my $code;
 		if (exists $opts->{fieldhash} and $opts->{fieldhash})
 		{
-			fieldhash my %data;
+			$fieldhash ||= do {
+				my $impl;
+				$impl ||= eval { require Hash::FieldHash;       'Hash::FieldHash' };
+				$impl ||= do   { require Hash::Util::FieldHash; 'Hash::Util::FieldHash' };
+				$impl->can('fieldhash');
+			};
+			my %data;
+			$fieldhash->(\%data);
+			
 			$code = sub
 			{
 				my $self = shift;
