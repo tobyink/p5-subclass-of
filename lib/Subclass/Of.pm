@@ -19,6 +19,13 @@ use Scalar::Util qw(refaddr blessed weaken);
 use Sub::Util qw(set_subname);
 use namespace::clean;
 
+BEGIN {
+	my $impl;
+	$impl ||= eval { require Hash::FieldHash;       'Hash::FieldHash' };
+	$impl ||= do   { require Hash::Util::FieldHash; 'Hash::Util::FieldHash' };
+	$impl->import('fieldhash');
+};
+
 our ($SUPER_PKG, $SUPER_SUB, $SUPER_ARG);
 our @EXPORT = qw(subclass_of);
 
@@ -273,7 +280,7 @@ sub _apply_attributes_raw
 		for my $key (sort keys %$opts)
 		{
 			croak "Option '$key' in attribute specification not supported"
-				unless $key =~ /^(is|isa|default|lazy)$/;
+				unless $key =~ /^(is|isa|default|lazy|fieldhash)$/;
 		}
 		if (exists $opts->{lazy} and not $opts->{lazy})
 		{
@@ -289,25 +296,54 @@ sub _apply_attributes_raw
 				unless blessed $opts->{isa} && $opts->{isa}->can('assert_valid');
 		}
 		
-		*{"$child\::$name"} = sub
+		my $code;
+		if (exists $opts->{fieldhash} and $opts->{fieldhash})
 		{
-			my $self = shift;
-			if (@_)
+			fieldhash my %data;
+			$code = sub
 			{
-				croak "read-only accessor" unless $opts->{is} eq 'rw';
-				$opts->{isa}->assert_valid($_[0]) if $opts->{isa};
-				$self->{$name} = $_[0];
-			}
-			if (exists $opts->{default} and not exists $self->{$name})
+				my $self = shift;
+				if (@_)
+				{
+					croak "read-only accessor" unless $opts->{is} eq 'rw';
+					$opts->{isa}->assert_valid($_[0]) if $opts->{isa};
+					$data{$self} = $_[0];
+				}
+				if (exists $opts->{default} and not exists $self->{$name})
+				{
+					my $tmp = ref($opts->{default}) eq q(CODE)
+						? $opts->{default}->($self)
+						: $opts->{default};
+					$opts->{isa}->assert_valid($tmp) if $opts->{isa};
+					$data{$self} = $tmp;
+				}
+				$data{$self};
+			};
+		}
+		else
+		{
+			$code = sub
 			{
-				my $tmp = ref($opts->{default}) eq q(CODE)
-					? $opts->{default}->($self)
-					: $opts->{default};
-				$opts->{isa}->assert_valid($tmp) if $opts->{isa};
-				$self->{$name} = $tmp;
-			}
-			return $self->{$name};
-		};
+				my $self = shift;
+				if (@_)
+				{
+					croak "read-only accessor" unless $opts->{is} eq 'rw';
+					$opts->{isa}->assert_valid($_[0]) if $opts->{isa};
+					$self->{$name} = $_[0];
+				}
+				if (exists $opts->{default} and not exists $self->{$name})
+				{
+					my $tmp = ref($opts->{default}) eq q(CODE)
+						? $opts->{default}->($self)
+						: $opts->{default};
+					$opts->{isa}->assert_valid($tmp) if $opts->{isa};
+					$self->{$name} = $tmp;
+				}
+				$self->{$name};
+			};
+		}
+		
+		*{"$child\::$name"} = set_subname("$child\::$name", $code);
 	};
 	
 	$me->_apply_attributes_generic($has, $opts);
@@ -533,6 +569,15 @@ If the parent class is a plain old Perl class, then a small built-in
 attribute builder is used, which assumes that the object is a blessed
 hash. The builder supports C<is>, C<isa> and C<default> (which is always
 treated as lazy). It only builds accessors, I<not> a constructor!
+
+From Subclass::Of 0.008, you can pass C<< fieldhash => 1 >> to use
+L<Hash::Util::FieldHash> or L<Hash::FieldHash> to store the attribute
+inside-out, so the accessor will work for non-hashrefs.
+
+   use SubClass::Of "MyClass",
+      -has => [
+          counter => [ is => "ro", isa => Int, fieldhash => 1 ],
+      ];
 
 =item C<< -package >>
 
