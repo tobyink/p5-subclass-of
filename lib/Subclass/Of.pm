@@ -643,7 +643,11 @@ The return value of C<subclass_of> is the name of the class as a string.
 
 =begin trustme
 
+=over
+
 =item subclass_of
+
+=back
 
 =end trustme
 
@@ -657,7 +661,11 @@ aliases into other packages, use the C<< install >> method:
 
 =begin trustme
 
+=over
+
 =item install
+
+=back
 
 =end trustme
 
