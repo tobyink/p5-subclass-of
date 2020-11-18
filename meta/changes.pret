@@ -82,3 +82,9 @@
 	changeset [
 		item "Support fieldhash=>1 to allow attributes to be stored inside-out when subclassing non-Moose/Mouse/Moo classes."^^Addition;
 	].
+
+`Subclass-Of 0.009 cpan:TOBYINK`
+	issued  2020-11-18;
+	changeset [
+		item "Require Hash::Util::FieldHash::Compat instead of Hash::FieldHash on Perl 5.8 because the latter seems to have issues installing. (Urgh Module::Build.)"^^Change;
+	].
